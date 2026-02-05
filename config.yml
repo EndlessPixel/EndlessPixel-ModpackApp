@@ -1,0 +1,17 @@
+common:
+  check_update_on_startup: true
+  download_dir: C:\Users\Administrator\Downloads\EndlessPixel
+  max_threads: 4
+  mirror: GitHub
+  window_geometry:
+  - 900
+  - 600
+  window_position:
+  - 98
+  - 24
+mirrors:
+  Cloudflare: https://gh-proxy.org/
+  Edgeone: https://edgeone.gh-proxy.org/
+  Fastly: https://cdn.gh-proxy.org/
+  GitHub: ''
+  香港: https://hk.gh-proxy.org/

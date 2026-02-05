@@ -1,2 +1,10 @@
-PyQt5>=5.15.0
-requests>=2.25.0
+# 核心UI框架
+PyQt5>=5.15.0,<5.16.0
+# 网络请求
+requests>=2.31.0,<3.0.0
+# 配置文件解析
+PyYAML>=6.0.0,<7.0.0
+# Markdown转HTML（更新日志渲染）
+Markdown>=3.5.0,<4.0.0
+# 代码高亮（Markdown扩展依赖）
+pygments>=2.17.0,<3.0.0
