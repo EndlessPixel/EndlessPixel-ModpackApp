@@ -7,8 +7,8 @@ common:
   - 900
   - 600
   window_position:
-  - 98
-  - 24
+  - 513
+  - 74
 mirrors:
   Cloudflare: https://gh-proxy.org/
   Edgeone: https://edgeone.gh-proxy.org/

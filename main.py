@@ -1,35 +1,24 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-Minecraft整合包下载器
-用于下载EndlessPixel整合包，支持多线程下载和镜像源选择
-"""
-
 import sys
 import os
 import re
-import json
 import threading
 import queue
 import yaml
 import requests
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QProgressBar, QFileDialog, QComboBox, QMenu, QAction,
     QMessageBox, QSplitter, QStyleFactory, QStyle, QDialog,
-    QDialogButtonBox, QSpinBox, QCheckBox, QLineEdit, QTextEdit,
-    QGroupBox, QGridLayout, QSizePolicy, QTabWidget, QTextBrowser
+    QDialogButtonBox, QSpinBox, QCheckBox, QLineEdit,
+    QGroupBox, QGridLayout, QTabWidget, QTextBrowser
 )
 from PyQt5.QtCore import (
-    Qt, QThread, pyqtSignal, QUrl, QEvent, QSettings,
-    QPoint, QSize, QTimer
+    Qt, QThread, pyqtSignal, QEvent
 )
 from PyQt5.QtGui import (
-    QIcon, QFont, QColor, QPalette, QTextCursor,
-    QDesktopServices, QPixmap
+    QFont, QColor
 )
 import markdown
 from datetime import datetime
@@ -42,7 +31,7 @@ if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 # 应用程序版本号
-APP_VERSION = "1.1"
+APP_VERSION = "1.2"
 # GitHub更新检查URL
 UPDATE_CHECK_URL = "https://api.github.com/repos/EndlessPixel/EndlessPixel-ModpackApp/releases/latest"
 # 版本日志API URL
@@ -386,7 +375,7 @@ class VersionManager:
                 
                 # 查找符合格式的文件
                 matched_asset = None
-                pattern = r'^EndlessPixel\.\d+\.\d+(\.\d+)?-v\d+-(\d+\.\d+|b\d+)\.(zip|mrpack)$'
+                pattern = r'^EndlessPixel\.(\d+\.\d+(?:\.\d+)?)-(v\d+)?-?([ab]?\d+(?:\.\d+)?)\.(zip|mrpack)$'
                 
                 for asset in assets:
                     asset_name = asset['name']
@@ -818,8 +807,11 @@ class ReleaseNotesDialog(QDialog):
         
         # 在新线程中加载
         def load_thread():
+            print(f"开始加载更新日志: {self.tag_name}")
             try:
                 notes = self.version_manager.get_release_notes(self.tag_name)
+                print(f"获取更新日志成功，长度: {len(notes)}")
+                
                 # 转换Markdown到HTML
                 html = markdown.markdown(
                     notes,
@@ -868,11 +860,19 @@ class ReleaseNotesDialog(QDialog):
                 </html>
                 """
                 
-                # 在主线程中更新UI
-                QTimer.singleShot(0, lambda: self.notes_browser.setHtml(styled_html))
+                # 使用 invokeMethod 在主线程中更新UI
+                from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                QMetaObject.invokeMethod(self.notes_browser, "setHtml", 
+                                       Qt.QueuedConnection,
+                                       Q_ARG(str, styled_html))
+                print("UI更新命令已发送 (invokeMethod)")
             except Exception as e:
+                print(f"加载更新日志失败: {e}")
                 error_html = f"<p style='color: red;'>加载更新日志失败: {str(e)}</p>"
-                QTimer.singleShot(0, lambda: self.notes_browser.setHtml(error_html))
+                from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                QMetaObject.invokeMethod(self.notes_browser, "setHtml", 
+                                       Qt.QueuedConnection,
+                                       Q_ARG(str, error_html))
         
         thread = threading.Thread(target=load_thread)
         thread.daemon = True
@@ -1255,9 +1255,14 @@ class MainWindow(QMainWindow):
     
     def view_release_notes(self):
         """查看更新日志"""
+        print("view_release_notes 被调用")
         if hasattr(self, 'current_version') and self.current_version:
+            print(f"current_version: {self.current_version}")
+            print(f"tag_name: {self.current_version['tag_name']}")
             dialog = ReleaseNotesDialog(self.version_manager, self.current_version['tag_name'], self)
             dialog.exec_()
+        else:
+            print("current_version 不存在或为空")
     
     def check_for_updates(self):
         """检查应用程序更新"""
